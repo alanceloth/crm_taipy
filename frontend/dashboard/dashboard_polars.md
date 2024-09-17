@@ -1,6 +1,6 @@
 # Dashboard de KPIs
 
-### Esta página oferece uma visão geral dos KPIs do sistema **CRM**{: .color-primary}, como **cadastros**, **pedidos** e **ticket médio**, além de gráficos mostrando a evolução de cada métrica ao longo do tempo. (dados processados com duckdb)
+### Esta página oferece uma visão geral dos KPIs do sistema **CRM**{: .color-primary}, como **cadastros**, **pedidos** e **ticket médio**, além de gráficos mostrando a evolução de cada métrica ao longo do tempo. (dados processados com polars)
 
 <br/>
 

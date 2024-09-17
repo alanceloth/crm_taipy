@@ -18,6 +18,7 @@ Gerar dados
 		- `poetry shell`
 	- Dependências
 		- `poetry add taipy`
+		- `poetry add polars`
 		- `poetry add faker`
 		- `poetry add python-dotenv`
 		- `poetry add duckdb`

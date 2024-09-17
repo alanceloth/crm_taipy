@@ -1,10 +1,16 @@
 from taipy.gui import Gui
+import taipy.gui.builder as tgb
 from dashboard.dashboard import dashboard_md
-from dashboard.dashboard_duckdb import dashboard_duckdb_md
+from dashboard.dashboard_polars import dashboard_md_polars
+
+# Add a navbar to switch from one page to the other
+with tgb.Page() as root_page:
+    tgb.navbar()
+    tgb.text("# Dashboard de KPIs", mode="md")
 
 pages = {
     '/': dashboard_md, 
-    "Duckdb": dashboard_duckdb_md, 
+    "Polars": dashboard_md_polars, 
 }
 
 if __name__ == '__main__':

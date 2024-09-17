@@ -39,11 +39,21 @@ def connect_duckdb():
     return con
 
 # Função para carregar os KPIs de pedidos e cadastros
-def load_kpis():
+def load_kpis_faturados_por_dia_estado_regiao():
     conn = connect_duckdb()
     query = """
         SELECT data_pedido, estado, total_pedidos_faturados, receita_total, ticket_medio
         FROM postgres_db.gold_kpi_faturados_por_dia_estado_regiao
+    """
+    df = conn.execute(query).fetchdf()
+    conn.close()
+    return df
+
+def load_kpis_cadastros_por_dia():
+    conn = connect_duckdb()
+    query = """
+        SELECT data_cadastro, total_cadastros
+        FROM postgres_db.gold_kpi_cadastros_por_dia
     """
     df = conn.execute(query).fetchdf()
     conn.close()
@@ -63,27 +73,28 @@ def initialize_kpis(df, selected_date=None):
 # Função para atualizar os gráficos e KPIs
 def update_dashboard(state):
     global total_cadastros, total_pedidos, ticket_medio, fig_cadastros, fig_pedidos, fig_receita_ticket
-    df_filtered = initialize_kpis(load_kpis(), state.selected_date)
+    df_filtered_faturados_por_dia_estado_regiao = initialize_kpis(load_kpis_faturados_por_dia_estado_regiao(), state.selected_date)
+    df_filtered_cadastros_por_dia = initialize_kpis(load_kpis_cadastros_por_dia(), state.selected_date)
     
     # Atualizar KPIs
-    total_cadastros = int(df_filtered.shape[0])  # Garantir que seja um número inteiro
-    total_pedidos = int(df_filtered['total_pedidos_faturados'].sum())  # Converter para inteiro
-    ticket_medio = round(df_filtered['ticket_medio'].mean(), 2) if not df_filtered['ticket_medio'].isna().all() else 0  # Ticket médio arredondado para 2 casas decimais
+    total_cadastros = int(df_filtered_cadastros_por_dia['total_cadastros'].sum())  # Garantir que seja um número inteiro
+    total_pedidos = int(df_filtered_faturados_por_dia_estado_regiao['total_pedidos_faturados'].sum())  # Converter para inteiro
+    ticket_medio = round(df_filtered_faturados_por_dia_estado_regiao['ticket_medio'].mean(), 2) if not df_filtered_faturados_por_dia_estado_regiao['ticket_medio'].isna().all() else 0  # Ticket médio arredondado para 2 casas decimais
 
 
     # Criação dos gráficos
     fig_cadastros = go.Figure()
-    df_cadastros = df_filtered.groupby(df_filtered['data_pedido'].dt.to_period('M')).size().reset_index(name='cadastros')
-    fig_cadastros.add_trace(go.Bar(x=df_cadastros['data_pedido'].astype(str), y=df_cadastros['cadastros'], name="Cadastros"))
+    df_cadastros = df_filtered_cadastros_por_dia.groupby(df_filtered_cadastros_por_dia['data_cadastro'].dt.to_period('M'))['total_cadastros'].sum().reset_index()
+    fig_cadastros.add_trace(go.Bar(x=df_cadastros['data_cadastro'].astype(str), y=df_cadastros['total_cadastros'], name="Cadastros"))
     state.fig_cadastros = fig_cadastros
 
     fig_pedidos = go.Figure()
-    df_pedidos = df_filtered.groupby(df_filtered['data_pedido'].dt.to_period('M'))['total_pedidos_faturados'].sum().reset_index()
+    df_pedidos = df_filtered_faturados_por_dia_estado_regiao.groupby(df_filtered_faturados_por_dia_estado_regiao['data_pedido'].dt.to_period('M'))['total_pedidos_faturados'].sum().reset_index()
     fig_pedidos.add_trace(go.Bar(x=df_pedidos['data_pedido'].astype(str), y=df_pedidos['total_pedidos_faturados'], name="Pedidos"))
     state.fig_pedidos = fig_pedidos
 
     fig_receita_ticket = go.Figure()
-    df_receita = df_filtered.groupby(df_filtered['data_pedido'].dt.to_period('M'))[['receita_total', 'ticket_medio']].sum().reset_index()
+    df_receita = df_filtered_faturados_por_dia_estado_regiao.groupby(df_filtered_faturados_por_dia_estado_regiao['data_pedido'].dt.to_period('M'))[['receita_total', 'ticket_medio']].sum().reset_index()
     fig_receita_ticket.add_trace(go.Bar(x=df_receita['data_pedido'].astype(str), y=df_receita['receita_total'], name="Receita", yaxis='y1'))
     fig_receita_ticket.add_trace(go.Scatter(x=df_receita['data_pedido'].astype(str), y=df_receita['ticket_medio'], mode='lines+markers', name="Ticket Médio", yaxis='y2'))
     
@@ -111,26 +122,26 @@ def initialize_dashboard_data():
     global total_cadastros, total_pedidos, ticket_medio, fig_cadastros, fig_pedidos, fig_receita_ticket
     
     # Carregar os dados
-    df = load_kpis()
-    
+    df_faturados_por_dia_estado_regiao = load_kpis_faturados_por_dia_estado_regiao()
+    df_cadastros_por_dia = load_kpis_cadastros_por_dia()
+
     # Atualizar KPIs
-    total_cadastros = int(df.shape[0])  # Garantir que seja um número inteiro
-    total_pedidos = int(df['total_pedidos_faturados'].sum())  # Converter para inteiro
-    ticket_medio = round(df['ticket_medio'].mean(), 2) if not df['ticket_medio'].isna().all() else 0  # Ticket médio arredondado para 2 casas decimais
+    total_cadastros = int(df_cadastros_por_dia['total_cadastros'].sum())  
+    total_pedidos = int(df_faturados_por_dia_estado_regiao['total_pedidos_faturados'].sum()) 
+    ticket_medio = round(df_faturados_por_dia_estado_regiao['ticket_medio'].mean(), 2) if not df_faturados_por_dia_estado_regiao['ticket_medio'].isna().all() else 0  # Ticket médio arredondado para 2 casas decimais
 
-
-    # Criar gráficos
+    # Criação dos gráficos
     fig_cadastros = go.Figure()
-    df_cadastros = df.groupby(df['data_pedido'].dt.to_period('M')).size().reset_index(name='cadastros')
-    fig_cadastros.add_trace(go.Bar(x=df_cadastros['data_pedido'].astype(str), y=df_cadastros['cadastros'], name="Cadastros"))
+    df_cadastros = df_cadastros_por_dia.groupby(df_cadastros_por_dia['data_cadastro'].dt.to_period('M'))['total_cadastros'].sum().reset_index()
+    fig_cadastros.add_trace(go.Bar(x=df_cadastros['data_cadastro'].astype(str), y=df_cadastros['total_cadastros'], name="Cadastros"))
 
     fig_pedidos = go.Figure()
-    df_pedidos = df.groupby(df['data_pedido'].dt.to_period('M'))['total_pedidos_faturados'].sum().reset_index()
+    df_pedidos = df_faturados_por_dia_estado_regiao.groupby(df_faturados_por_dia_estado_regiao['data_pedido'].dt.to_period('M'))['total_pedidos_faturados'].sum().reset_index()
     fig_pedidos.add_trace(go.Bar(x=df_pedidos['data_pedido'].astype(str), y=df_pedidos['total_pedidos_faturados'], name="Pedidos"))
 
     fig_receita_ticket = go.Figure()
     # Gráfico de receita ao longo dos meses e ticket médio com dois eixos y
-    df_receita = df.groupby(df['data_pedido'].dt.to_period('M'))[['receita_total', 'ticket_medio']].sum().reset_index()
+    df_receita = df_faturados_por_dia_estado_regiao.groupby(df_faturados_por_dia_estado_regiao['data_pedido'].dt.to_period('M'))[['receita_total', 'ticket_medio']].sum().reset_index()
     fig_receita_ticket.add_trace(go.Bar(x=df_receita['data_pedido'].astype(str), y=df_receita['receita_total'], name="Receita", yaxis='y1'))
     fig_receita_ticket.add_trace(go.Scatter(x=df_receita['data_pedido'].astype(str), y=df_receita['ticket_medio'], mode='lines+markers', name="Ticket Médio", yaxis='y2'))
     # Configuração dos eixos independentes para o gráfico de receita e ticket médio
