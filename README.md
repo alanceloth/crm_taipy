@@ -77,9 +77,12 @@ Gerar dados
 	- Gerar os arquivos usando o `generate_raw.py`
 		- Vai gerar um monte de .parquet na pasta datasets
 		- Tempo decorrido: 4110.15 segundos = 1 hora e 8 minutos
-	- Gerar a camada raw usando o `local_to_s3.py`
+	- Gerar a camada raw usando o `local_to_s3_boto3.py`
+		- Usando o `duckdb + boto3`, conectar no bucket s3 e subir todos os arquivos `.parquet`
+		- Tempo decorrido: 63 min (19s por arquivo aprox)
+	- Gerar a camada raw usando o `local_to_s3_duckdb.py`
 		- Usando o `duckdb`, conectar no bucket s3 e subir todos os arquivos `.parquet`
-		- Tempo decorrido: 704.02 segundos = 12 minutos
+		- Tempo decorrido: 27 min (8s por arquivo aprox, redução de 57% no tempo de processamento)
 	OU
 	- Gerar a camada raw usando o `load_raw_to_postgres.py`
 		- Usando o `duckdb`, conectar no banco `postgres` e subir em uma tabela só todos os arquivos `.parquet`
@@ -92,6 +95,11 @@ Gerar dados
 	- Criar os arquivos na pasta `models/bronze` 
 		- `bronze_cadastros.sql`
 		- `bronze_pedidos.sql`
+		- Opção 1:
+			- Raw no RDS para Bronze RDS: 98s + 105 = 3,5 min
+				- `dbt run --models bronze_rds`
+			- S3 para Bronze RDS: 93s + 84s = 3 min
+				- `dbt run --models bronze_s3 --target dev-duckdb`
 	- Criar os arquivos na pasta `models/silver`
 		- `silver_cadastros.sql`
 		- `silver_pedidos.sql`
@@ -109,6 +117,7 @@ Gerar dados
 		- `gold_kpi_taxa_conversao_estado_regiao.sql`
 		- `gold_kpi_ticket_medio_por_dia.sql`
 		- `gold_kpi_vendas_por_dia.sql`
+		- `gold_kpi_tb_vendas_por_dia.sql`
 	- Executar o comando `dbt build` (vai executar os `dbt tests` e o `dbt run` em conjunto)
 		- Finished running 4 table models, 6 data tests, 9 view models in 0 hours 14 minutes and 25.78 seconds (865.78s).
 
@@ -118,3 +127,7 @@ Dashboard Taipy
 	- Criar arquivo `dashboard.md`
 - Criar arquivo `main.py`
 - Executar comando `poetry run python frontend/main.py`
+
+- Usando view:
+
+- Usando tabela:

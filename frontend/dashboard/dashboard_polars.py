@@ -52,7 +52,7 @@ def load_kpis_cadastros_por_dia():
     conn = connect_duckdb()
     query = """
         SELECT data_cadastro, total_cadastros
-        FROM postgres_db.gold_kpi_cadastros_por_dia
+        FROM postgres_db.gold_kpi_tb_vendas_por_dia
     """
     df = pl.from_arrow(conn.execute(query).arrow())  # Convertendo para Polars
     conn.close()
