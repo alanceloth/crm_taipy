@@ -128,6 +128,18 @@ Dashboard Taipy
 - Criar arquivo `main.py`
 - Executar comando `poetry run python frontend/main.py`
 
-- Usando view:
+	Usando view pandas:
+		load : 2min e 26s
+		filtro: 1 min
 
-- Usando tabela:
+	Usando view polars:
+		load : 2min e 26s
+		filtro: 1 min
+
+	Usando tabela pandas:
+		load: 30s
+		filtro: 7s
+
+	Usando tabela polars:
+		load: 30s
+		filtro: 6s
