@@ -11,5 +11,9 @@ WITH vendas_diarias AS (
   GROUP BY data_pedido
 )
 
-SELECT *
+SELECT *, 
+  CASE 
+    WHEN total_pedidos > 0 THEN receita_total / total_pedidos
+    ELSE 0
+  END AS ticket_medio
 FROM vendas_diarias

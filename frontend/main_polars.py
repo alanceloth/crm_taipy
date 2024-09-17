@@ -20,5 +20,5 @@ if __name__ == '__main__':
     tp.Core().run()
 
     # Executando o servidor do Taipy com múltiplas páginas
-    gui_multi_pages.run(title="Dashboard de KPIs")
+    gui_multi_pages.run(title="Dashboard de KPIs", use_reloader=True)
 

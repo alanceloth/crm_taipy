@@ -41,9 +41,11 @@ def connect_duckdb():
 def load_kpis_faturados_por_dia_estado_regiao():
     conn = connect_duckdb()
     query = """
-        SELECT data_pedido, estado, total_pedidos_faturados, receita_total, ticket_medio
-        FROM postgres_db.gold_kpi_faturados_por_dia_estado_regiao
+        SELECT data_pedido, total_pedidos, receita_total, ticket_medio
+        FROM postgres_db.gold_kpi_tb_vendas_por_dia
     """
+    #FROM postgres_db.gold_kpi_tb_vendas_por_dia
+    #FROM postgres_db.gold_kpi_vendas_por_dia
     df = pl.from_arrow(conn.execute(query).arrow())  # Convertendo para Polars
     conn.close()
     return df
@@ -52,8 +54,10 @@ def load_kpis_cadastros_por_dia():
     conn = connect_duckdb()
     query = """
         SELECT data_cadastro, total_cadastros
-        FROM postgres_db.gold_kpi_tb_vendas_por_dia
+        FROM postgres_db.gold_kpi_tb_cadastros_por_dia
     """
+    #FROM postgres_db.gold_kpi_tb_cadastros_por_dia
+    #FROM postgres_db.gold_kpi_cadastros_por_dia
     df = pl.from_arrow(conn.execute(query).arrow())  # Convertendo para Polars
     conn.close()
     return df
@@ -81,10 +85,14 @@ def update_dashboard(state):
 
     # Atualizar KPIs
     total_cadastros = int(df_filtered_cadastros['total_cadastros'].sum())
-    total_pedidos = int(df_filtered_faturados['total_pedidos_faturados'].sum())
+    total_pedidos = int(df_filtered_faturados['total_pedidos'].sum())
     ticket_medio = df_filtered_faturados['ticket_medio'].mean()
     if ticket_medio is not None:
         ticket_medio = round(ticket_medio, 2)  # Corrigir para usar a função `round()
+    
+    state.total_cadastros = total_cadastros
+    state.total_pedidos = total_pedidos
+    state.ticket_medio = ticket_medio
 
     # Agregar cadastros por mês
     df_filtered_cadastros = df_filtered_cadastros.with_columns([
@@ -106,13 +114,13 @@ def update_dashboard(state):
     df_filtered_faturados = df_filtered_faturados.with_columns([
         pl.col('data_pedido').dt.truncate('1mo').alias('mes_pedido')
     ])
-    df_pedidos_grouped = df_filtered_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos_faturados')).sort('mes_pedido')
+    df_pedidos_grouped = df_filtered_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos')).sort('mes_pedido')
 
     # Criar o gráfico de pedidos
     fig_pedidos = go.Figure()
     fig_pedidos.add_trace(go.Bar(
         x=df_pedidos_grouped['mes_pedido'].to_list(), 
-        y=df_pedidos_grouped['total_pedidos_faturados'].to_list(), 
+        y=df_pedidos_grouped['total_pedidos'].to_list(), 
         name="Pedidos"
     ))
     state.fig_pedidos = fig_pedidos
@@ -167,7 +175,7 @@ def initialize_dashboard_data():
 
     # Atualizar KPIs
     total_cadastros = int(df_cadastros['total_cadastros'].sum())
-    total_pedidos = int(df_faturados['total_pedidos_faturados'].sum())
+    total_pedidos = int(df_faturados['total_pedidos'].sum())
     
     # Corrigindo a obtenção da média do ticket médio
     ticket_medio = df_faturados['ticket_medio'].mean()  # Isso já retorna um float
@@ -193,13 +201,13 @@ def initialize_dashboard_data():
     df_faturados = df_faturados.with_columns([
         pl.col('data_pedido').dt.truncate('1mo').alias('mes_pedido')
     ])
-    df_pedidos_grouped = df_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos_faturados')).sort('mes_pedido')
+    df_pedidos_grouped = df_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos')).sort('mes_pedido')
 
     # Criar o gráfico de pedidos
     fig_pedidos = go.Figure()
     fig_pedidos.add_trace(go.Bar(
         x=df_pedidos_grouped['mes_pedido'].to_list(), 
-        y=df_pedidos_grouped['total_pedidos_faturados'].to_list(), 
+        y=df_pedidos_grouped['total_pedidos'].to_list(), 
         name="Pedidos"
     ))
 
