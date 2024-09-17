@@ -3,12 +3,12 @@ import taipy as tp
 import taipy.gui.builder as tgb
 
 # Importando o conteúdo das páginas
-from dashboard.dashboard import dashboard_md  # Conteúdo Markdown para a página principal
+from dashboard.dashboard_polars import dashboard_md_polars # Conteúdo Markdown para a página Polars
 
 
 # Definição das páginas
 pages = {
-    '/': dashboard_md,  # Página principal
+    '/': dashboard_md_polars,  # Página principal
    
 }
 
@@ -21,3 +21,4 @@ if __name__ == '__main__':
 
     # Executando o servidor do Taipy com múltiplas páginas
     gui_multi_pages.run(title="Dashboard de KPIs")
+

@@ -28,7 +28,7 @@ Gerar dados
 		- `poetry add matplotlib`
 		- `poetry add seaborn`
 		- `poetry add plotly`
-- Setup banco de dados
+- Setup banco de dados - AWS
 	- Criar o banco de dados na Amazon, copiar as credenciais para um arquivo `.env`
 		- Entrar no amazon console
 		- Escolher a opção Database
@@ -42,10 +42,45 @@ Gerar dados
 		- Entrar no grupo de segurança da VPC
 		- Editar regras Inbound
 		- Liberar acesso Postgres para meu IP 
+- Setup bucket S3 - AWS
+	- Criar usuário IAM com a política AmazonS3FullAccess
+		- Criar a chave de acesso em Security Credentials
+		- Exportar a o ID e a Key para o `.env`
+	- Criar um bucket com block de acesso público
+		- Atribuir a politica
+		```
+		{
+		"Version": "2012-10-17",
+		"Id": "Policy1726582006745",
+		"Statement": [
+			{
+				"Sid": "Stmt1726581995058",
+				"Effect": "Allow",
+				"Principal": {
+					"AWS": "ARN DO SEU USUARIO"
+				},
+				"Action": [
+					"s3:GetObject",
+					"s3:ListBucket",
+					"s3:PutObject"
+				],
+				"Resource": [
+					"arn:aws:s3:::NOME_DO_BUCKET",
+					"arn:aws:s3:::NOME_DO_BUCKET/*"
+				]
+			}
+		]
+	}
+		```
+	
 - RAW
 	- Gerar os arquivos usando o `generate_raw.py`
 		- Vai gerar um monte de .parquet na pasta datasets
 		- Tempo decorrido: 4110.15 segundos = 1 hora e 8 minutos
+	- Gerar a camada raw usando o `local_to_s3.py`
+		- Usando o `duckdb`, conectar no bucket s3 e subir todos os arquivos `.parquet`
+		- Tempo decorrido: 704.02 segundos = 12 minutos
+	OU
 	- Gerar a camada raw usando o `load_raw_to_postgres.py`
 		- Usando o `duckdb`, conectar no banco `postgres` e subir em uma tabela só todos os arquivos `.parquet`
 		- Tempo decorrido: 704.02 segundos = 12 minutos

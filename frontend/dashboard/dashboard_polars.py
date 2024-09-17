@@ -82,26 +82,62 @@ def update_dashboard(state):
     # Atualizar KPIs
     total_cadastros = int(df_filtered_cadastros['total_cadastros'].sum())
     total_pedidos = int(df_filtered_faturados['total_pedidos_faturados'].sum())
-    ticket_medio = df_filtered_faturados['ticket_medio'].mean().round(2)
+    ticket_medio = df_filtered_faturados['ticket_medio'].mean()
+    if ticket_medio is not None:
+        ticket_medio = round(ticket_medio, 2)  # Corrigir para usar a função `round()
+
+    # Agregar cadastros por mês
+    df_filtered_cadastros = df_filtered_cadastros.with_columns([
+        pl.col('data_cadastro').dt.truncate('1mo').alias('mes_cadastro')
+    ])
+    df_cadastros_grouped = df_filtered_cadastros.group_by('mes_cadastro').agg(pl.sum('total_cadastros')).sort('mes_cadastro')
 
     # Criar gráficos
-    # Gráfico de cadastros
-    df_cadastros_grouped = df_filtered_cadastros.groupby('data_cadastro').agg(pl.sum('total_cadastros')).sort('data_cadastro')
+    # Criar o gráfico de cadastros
     fig_cadastros = go.Figure()
-    fig_cadastros.add_trace(go.Bar(x=df_cadastros_grouped['data_cadastro'].to_list(), y=df_cadastros_grouped['total_cadastros'].to_list(), name="Cadastros"))
+    fig_cadastros.add_trace(go.Bar(
+        x=df_cadastros_grouped['mes_cadastro'].to_list(), 
+        y=df_cadastros_grouped['total_cadastros'].to_list(), 
+        name="Cadastros"
+    ))
     state.fig_cadastros = fig_cadastros
 
-    # Gráfico de pedidos
-    df_pedidos_grouped = df_filtered_faturados.groupby('data_pedido').agg(pl.sum('total_pedidos_faturados')).sort('data_pedido')
+    # Agregar pedidos por mês
+    df_filtered_faturados = df_filtered_faturados.with_columns([
+        pl.col('data_pedido').dt.truncate('1mo').alias('mes_pedido')
+    ])
+    df_pedidos_grouped = df_filtered_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos_faturados')).sort('mes_pedido')
+
+    # Criar o gráfico de pedidos
     fig_pedidos = go.Figure()
-    fig_pedidos.add_trace(go.Bar(x=df_pedidos_grouped['data_pedido'].to_list(), y=df_pedidos_grouped['total_pedidos_faturados'].to_list(), name="Pedidos"))
+    fig_pedidos.add_trace(go.Bar(
+        x=df_pedidos_grouped['mes_pedido'].to_list(), 
+        y=df_pedidos_grouped['total_pedidos_faturados'].to_list(), 
+        name="Pedidos"
+    ))
     state.fig_pedidos = fig_pedidos
 
-    # Gráfico de receita e ticket médio
-    df_receita_grouped = df_filtered_faturados.groupby('data_pedido').agg([pl.sum('receita_total'), pl.mean('ticket_medio')]).sort('data_pedido')
+    # Agregar receita e ticket médio por mês
+    df_receita_grouped = df_filtered_faturados.group_by('mes_pedido').agg([
+        pl.sum('receita_total'),
+        pl.mean('ticket_medio')
+    ]).sort('mes_pedido')
+
+    # Criar o gráfico de receita e ticket médio
     fig_receita_ticket = go.Figure()
-    fig_receita_ticket.add_trace(go.Bar(x=df_receita_grouped['data_pedido'].to_list(), y=df_receita_grouped['receita_total'].to_list(), name="Receita", yaxis='y1'))
-    fig_receita_ticket.add_trace(go.Scatter(x=df_receita_grouped['data_pedido'].to_list(), y=df_receita_grouped['ticket_medio'].to_list(), mode='lines+markers', name="Ticket Médio", yaxis='y2'))
+    fig_receita_ticket.add_trace(go.Bar(
+        x=df_receita_grouped['mes_pedido'].to_list(), 
+        y=df_receita_grouped['receita_total'].to_list(), 
+        name="Receita", 
+        yaxis='y1'
+    ))
+    fig_receita_ticket.add_trace(go.Scatter(
+        x=df_receita_grouped['mes_pedido'].to_list(), 
+        y=df_receita_grouped['ticket_medio'].to_list(), 
+        mode='lines+markers', 
+        name="Ticket Médio", 
+        yaxis='y2'
+    ))
 
     # Configuração dos eixos independentes para o gráfico de receita e ticket médio
     fig_receita_ticket.update_layout(
@@ -132,9 +168,75 @@ def initialize_dashboard_data():
     # Atualizar KPIs
     total_cadastros = int(df_cadastros['total_cadastros'].sum())
     total_pedidos = int(df_faturados['total_pedidos_faturados'].sum())
-    ticket_medio = df_faturados['ticket_medio'].mean().round(2)
+    
+    # Corrigindo a obtenção da média do ticket médio
+    ticket_medio = df_faturados['ticket_medio'].mean()  # Isso já retorna um float
+    if ticket_medio is not None:
+        ticket_medio = round(ticket_medio, 2)  # Use a função `round` do Python diretamente
+    
+    # Agregar cadastros por mês
+    df_cadastros = df_cadastros.with_columns([
+        pl.col('data_cadastro').dt.truncate('1mo').alias('mes_cadastro')
+    ])
+    df_cadastros_grouped = df_cadastros.group_by('mes_cadastro').agg(pl.sum('total_cadastros')).sort('mes_cadastro')
+    
+    # Criar gráficos
+    # Criar o gráfico de cadastros
+    fig_cadastros = go.Figure()
+    fig_cadastros.add_trace(go.Bar(
+        x=df_cadastros_grouped['mes_cadastro'].to_list(), 
+        y=df_cadastros_grouped['total_cadastros'].to_list(), 
+        name="Cadastros"
+    ))
 
-    # Gráficos de cadastros, pedidos e receita/ticket médio (mesma lógica de update_dashboard)
+    # Agregar pedidos por mês
+    df_faturados = df_faturados.with_columns([
+        pl.col('data_pedido').dt.truncate('1mo').alias('mes_pedido')
+    ])
+    df_pedidos_grouped = df_faturados.group_by('mes_pedido').agg(pl.sum('total_pedidos_faturados')).sort('mes_pedido')
+
+    # Criar o gráfico de pedidos
+    fig_pedidos = go.Figure()
+    fig_pedidos.add_trace(go.Bar(
+        x=df_pedidos_grouped['mes_pedido'].to_list(), 
+        y=df_pedidos_grouped['total_pedidos_faturados'].to_list(), 
+        name="Pedidos"
+    ))
+
+    # Agregar receita e ticket médio por mês
+    df_receita_grouped = df_faturados.group_by('mes_pedido').agg([
+        pl.sum('receita_total'),
+        pl.mean('ticket_medio')
+    ]).sort('mes_pedido')
+
+    # Criar o gráfico de receita e ticket médio
+    fig_receita_ticket = go.Figure()
+    fig_receita_ticket.add_trace(go.Bar(
+        x=df_receita_grouped['mes_pedido'].to_list(), 
+        y=df_receita_grouped['receita_total'].to_list(), 
+        name="Receita", 
+        yaxis='y1'
+    ))
+    fig_receita_ticket.add_trace(go.Scatter(
+        x=df_receita_grouped['mes_pedido'].to_list(), 
+        y=df_receita_grouped['ticket_medio'].to_list(), 
+        mode='lines+markers', 
+        name="Ticket Médio", 
+        yaxis='y2'
+    ))
+
+    # Configuração dos eixos independentes para o gráfico de receita e ticket médio
+    fig_receita_ticket.update_layout(
+        title="Receita e Ticket Médio ao Longo dos Meses",
+        xaxis_title="Mês",
+        yaxis_title="Receita",
+        yaxis2=dict(
+            title="Ticket Médio",
+            overlaying='y',
+            side='right',
+            showgrid=False
+        )
+    )
 
 # Ler o arquivo .md com a codificação correta
 def load_markdown_file(file_path):
@@ -144,5 +246,5 @@ def load_markdown_file(file_path):
 # pré-carregar os dados
 initialize_dashboard_data()
 
-dashboard_md_content = load_markdown_file("frontend/dashboard/dashboard.md")
+dashboard_md_content = load_markdown_file("frontend/dashboard/dashboard_polars.md")
 dashboard_md_polars = Markdown(dashboard_md_content)
