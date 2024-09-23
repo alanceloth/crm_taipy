@@ -11,6 +11,7 @@ __pycache__/
 policy.txt
 *.exe
 terraform/.terraform/*
+terraform\.terraform\*
 
 # Distribution / packaging
 .Python
