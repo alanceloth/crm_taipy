@@ -143,3 +143,24 @@ Dashboard Taipy
 	Usando tabela polars:
 		load: 30s
 		filtro: 6s
+
+
+
+## Terraform
+
+```
+terraform init -upgrade
+```
+
+Descrição dos Arquivos
+provider.tf: Configuração do provedor AWS.
+versions.tf: Definição das versões do Terraform e dos provedores.
+variables.tf: Declaração das variáveis usadas no projeto.
+terraform.tfvars: Atribuição de valores para as variáveis.
+networking.tf: Configuração de VPC, sub-redes, e Internet Gateway.
+security_groups.tf: Definição dos grupos de segurança.
+rds.tf: Configuração da instância RDS PostgreSQL.
+s3.tf: Configuração do bucket S3.
+iam.tf: Configuração de roles e políticas IAM.
+main.tf: Importa todos os módulos e recursos definidos nos outros arquivos.
+outputs.tf: Definição das saídas do Terraform.

@@ -1,0 +1,11 @@
+#AWS
+POSTGRES_HOSTNAME=nomebanco.regiao.rds.amazonaws.com
+POSTGRES_DBNAME=nome_db
+POSTGRES_USER=user_db
+POSTGRES_PASSWORD=senha_db
+POSTGRES_PORT=5432
+
+AWS_ACCESS_KEY_ID=key_id
+AWS_SECRET_ACCESS_KEY=key_secret
+AWS_BUCKET_NAME=nome_bucket
+AWS_REGION=regiao_aws

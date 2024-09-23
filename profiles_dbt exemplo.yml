@@ -1,0 +1,25 @@
+#Colocar esse profile lá na sua pasta de profiles do DBT, a minha fica em C:/Users/MEUNOME/.dbt
+
+dbt_datalakehouse:
+  outputs:
+    dev:
+      dbname: crm_taipy
+      host: <SEU_HOST>
+      keepalives_idle: 0
+      password: <SENHA_POSTGRES>
+      port: 5432
+      schema: public
+      threads: 1
+      type: postgres
+      user: <USER_POSTGRES>
+    dev-duckdb:
+      type: duckdb
+      path: ":memory:"
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        s3_region: <SUA_REGIAO>
+        s3_access_key_id: <IAM_ACCESS_ID>
+        s3_secret_access_key: <IAM_ACCESS_KEY>
+  target: dev
